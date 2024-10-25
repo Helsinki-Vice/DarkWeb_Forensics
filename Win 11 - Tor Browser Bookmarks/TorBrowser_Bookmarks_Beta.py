@@ -582,7 +582,7 @@ def main():
         |_|    |___/    
 
 Tor Browser Bookmark Extractor
-Version: 1.0 Oct, 2024
+Version: Beta Oct, 2024
 Author: Spyder Forensics Training
 Website: www.spyderforensics.com
 """)
