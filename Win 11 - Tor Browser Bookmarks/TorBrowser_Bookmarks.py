@@ -671,7 +671,7 @@ def main():
         |_|    |___/    
 
 Tor Browser Bookmark Extractor
-Version: 1 Oct, 2024
+Version: 1.0 Nov, 2024
 Author: Spyder Forensics Training
 Website: www.spyderforensics.com
 Course: Host-Based Dark Web Forensics
