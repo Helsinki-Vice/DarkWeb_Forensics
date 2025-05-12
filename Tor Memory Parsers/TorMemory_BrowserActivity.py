@@ -1,5 +1,3 @@
-import os
-import argparse
 import mmap
 import re
 import time
@@ -22,7 +20,7 @@ patterns = [
 ]
 pattern_re = re.compile(b'|'.join(re.escape(p) for p in patterns))  # Join patterns into one regex
 
-def process_match(match_offset, memory_data, csv_writer):
+def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer) -> None:
     """Processes pattern match within memory dump and writes relevant data to CSV."""
     try:
         matched_prefix = memory_data[match_offset:match_offset + 8]
@@ -71,7 +69,7 @@ def process_match(match_offset, memory_data, csv_writer):
             # Write Extracted Data to CSV**
             csv_writer.writerow([match_offset, entry_type, extracted_data])
 
-def extract_browser_activity(dump_file_path, output_csv_path):
+def extract_browser_activity(dump_file_path: str, output_csv_path: str) -> None:
     """Reads the entire file using mmap and processes matches sequentially."""
     start_time = time.time()
     print(f"Processing started at: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}\n")

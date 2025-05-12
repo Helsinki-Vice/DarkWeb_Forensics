@@ -1,5 +1,3 @@
-import os
-import argparse
 import mmap
 import re
 import time
@@ -16,7 +14,7 @@ patterns = [
 ]
 pattern_re = re.compile(b'|'.join(re.escape(p) for p in patterns))  # Join patterns into one regex
 
-def process_match(match_offset, memory_data, csv_writer):
+def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer):
     """Processes pattern match within memory dump"""
     try:
         matched_prefix = memory_data[match_offset:match_offset + 9]
@@ -33,7 +31,7 @@ def process_match(match_offset, memory_data, csv_writer):
         private_browsing_id = ""
         first_party_domain = ""
 
-        def stop_extraction():
+        def stop_extraction() -> tuple[int, str, str, str, str, str, str, str]:
             print (f"[+] Partially Carved SOCKS5 Traffic Identified at offset {match_offset}")
             return match_offset, "Partially Carved SOCKS5 Browser Request", tls_metadata, url, socks_info, second_url, private_browsing_id, first_party_domain
 
@@ -115,7 +113,7 @@ def process_match(match_offset, memory_data, csv_writer):
             socks_info, second_url, private_browsing_id, first_party_domain
         ])
 
-def extract_socks5_traffic(dump_file_path, output_csv_path):
+def extract_socks5_traffic(dump_file_path: str, output_csv_path: str) -> None:
     """Reads the entire file using mmap"""
     start_time = time.time()
     print(f"Processing started at: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}\n")

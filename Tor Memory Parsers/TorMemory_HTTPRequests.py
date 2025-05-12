@@ -1,5 +1,3 @@
-import os
-import argparse
 import mmap
 import re
 import time
@@ -13,7 +11,7 @@ patterns = [
 ]
 pattern_re = re.compile(b'|'.join(re.escape(p) for p in patterns))
 
-def process_match(match_offset, memory_data, csv_writer):
+def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer):
     """Manually walks the memory data to extract HTTP request metadata"""
     try:
         matched_prefix = memory_data[match_offset:match_offset + 26]
@@ -115,7 +113,7 @@ def process_match(match_offset, memory_data, csv_writer):
         match_offset, "HTTP Request", method, request_id, url, origin_url, document_url, request_type, 
     ])
 
-def extract_http_requests(dump_file_path, output_csv_path):
+def extract_http_requests(dump_file_path: str, output_csv_path: str):
     """Reads the memory dump and extracts HTTP request metadata."""
     start_time = time.time()
     print(f"Processing started at: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}\n")

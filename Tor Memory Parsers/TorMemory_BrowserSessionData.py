@@ -1,5 +1,4 @@
 import os
-import argparse
 import mmap
 import re
 import time
@@ -16,7 +15,7 @@ patterns = [
 pattern_re = re.compile(b'|'.join(re.escape(p) for p in patterns))
 
 
-def is_valid_base64(s):
+def is_valid_base64(s: str) -> bool:
     """Check if a string is a valid Base64 encoded string."""
     try:
         base64.b64decode(s, validate=True)
@@ -25,7 +24,7 @@ def is_valid_base64(s):
         return False
 
 
-def extract_base64_icon(favicon_url, index, extracted_icons_folder):
+def extract_base64_icon(favicon_url: str, index: int, extracted_icons_folder: str) ->  tuple[str, str] | None:
     """Extract base64-encoded favicons and save them to a folder."""
     
     if not favicon_url.startswith('data:image'):
@@ -67,7 +66,7 @@ def extract_base64_icon(favicon_url, index, extracted_icons_folder):
         print(f"[-] Error decoding Base64 Favicon at offset {index}: {e}")
         return None
 
-def process_match(match_offset, memory_data, csv_writer, extracted_icons_folder):
+def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, extracted_icons_folder: str) -> None:
     """Manually walks the memory data to extract Browser Tab Session Data."""
     try:
         matched_prefix = memory_data[match_offset:match_offset + 26]
@@ -168,7 +167,7 @@ def process_match(match_offset, memory_data, csv_writer, extracted_icons_folder)
     ])
 
 
-def extract_tabdata(dump_file_path, output_folder):
+def extract_tabdata(dump_file_path: str, output_folder: str) -> None:
     """Reads the memory dump and extracts Browser Tab Session Data."""
     start_time = time.time()
     print(f"Processing started at: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}\n")
