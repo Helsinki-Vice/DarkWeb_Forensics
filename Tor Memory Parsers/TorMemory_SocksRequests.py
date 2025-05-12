@@ -5,6 +5,8 @@ import re
 import time
 import csv
 
+from shared import banner
+
 # Pre-compile patterns for efficiency
 patterns = [
     b'\x01\x00\x00\x00\xF8\x00\x00\x00\x2E',
@@ -145,23 +147,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output', type=str, required=True, help='Path to the output CSV file.')
 
     args = parser.parse_args()
-
-    print(r"""
-   _____                 _             ______                       _          
-  / ____|               | |           |  ____|                     (_)         
- | (___  _ __  _   _  __| | ___ _ __  | |__ ___  _ __ ___ _ __  ___ _  ___ ___ 
-  \___ \| '_ \| | | |/ _` |/ _ \ '__| |  __/ _ \| '__/ _ \ '_ \/ __| |/ __/ __|
-  ____) | |_) | |_| | (_| |  __/ |    | | | (_) | | |  __/ | | \__ \ | (__\__ \
- |_____/| .__/ \__, |\__,_|\___|_|    |_|  \___/|_|  \___|_| |_|___/_|\___|___/
-        | |     __/ |                                                          
-        |_|    |___/    
-
-Tor Browser Memory Parser - SOCKS5 Requests
-Version: 1.0 Feb, 2025
-Author: Spyder Forensics Training
-Website: www.spyderforensics.com
-Course: Host-Based Dark Web Forensics
-""")
+    print(banner("SOCKS5 Requests"))
 
     if not os.path.isfile(args.input):
         print("The specified memory dump file does not exist.")

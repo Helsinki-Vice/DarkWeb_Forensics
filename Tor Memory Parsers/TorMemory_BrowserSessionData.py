@@ -6,6 +6,8 @@ import time
 import csv
 import base64
 
+from shared import banner
+
 # Pre-compile the pattern for efficiency
 patterns = [
     b'\xFF\xFF\x66\x69\x72\x65\x66\x6F\x78\x2D\x70\x72\x69\x76\x61\x74\x65\x00'
@@ -205,22 +207,6 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output', type=str, required=True, help='Path to the output folder.')
 
     args = parser.parse_args()
+    print(banner("Browser Tab Session Data"))
     
-    print(r"""
-   _____                 _             ______                       _          
-  / ____|               | |           |  ____|                     (_)         
- | (___  _ __  _   _  __| | ___ _ __  | |__ ___  _ __ ___ _ __  ___ _  ___ ___ 
-  \___ \| '_ \| | | |/ _` |/ _ \ '__| |  __/ _ \| '__/ _ \ '_ \/ __| |/ __/ __|
-  ____) | |_) | |_| | (_| |  __/ |    | | | (_) | | |  __/ | | \__ \ | (__\__ \
- |_____/| .__/ \__, |\__,_|\___|_|    |_|  \___/|_|  \___|_| |_|___/_|\___|___/
-        | |     __/ |                                                          
-        |_|    |___/    
-
-Tor Browser Memory Parser - Browser Tab Session Data
-Version: 1.0 Feb, 2025
-Author: Spyder Forensics Training
-Website: www.spyderforensics.com
-Course: Host-Based Dark Web Forensics
-""")
-
     extract_tabdata(args.input, args.output)
