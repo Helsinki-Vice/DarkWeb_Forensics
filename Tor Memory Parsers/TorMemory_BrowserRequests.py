@@ -2,6 +2,7 @@ import mmap
 import re
 
 from shared import run_argparser
+from records import BrowserRequest
 
 # Pre-compile patterns for efficiency
 patterns = [
@@ -11,14 +12,15 @@ patterns = [
 ]
 pattern_re = re.compile(b'|'.join(re.escape(p) for p in patterns))  # Join patterns into one regex
 
-def process_match(match_offset: int, memory_data: mmap.mmap, _: str | None) -> list[str] | None:
+def process_match(match_offset: int, memory_data: mmap.mmap, _: str | None) -> BrowserRequest | None:
     """Processes pattern match within memory dump and writes to CSV only if required fields exist."""
+    match_prefix_len = 9
     try:
-        matched_prefix = memory_data[match_offset:match_offset + 9]
+        matched_prefix = memory_data[match_offset:match_offset + match_prefix_len]
     except IndexError:
         return  
 
-    index = match_offset + 9 
+    index = match_offset + match_prefix_len
 
     if matched_prefix:
         private_browsing_id = ""
@@ -29,7 +31,7 @@ def process_match(match_offset: int, memory_data: mmap.mmap, _: str | None) -> l
         # Extract Private Browsing ID (Required)
         private_start = memory_data.find(b'privateBrowsingId=', index)
         if private_start == -1 or private_start > index + 100:
-            return  
+            return None
 
         private_id_start = private_start + len(b'privateBrowsingId=')
         private_browsing_id_byte = memory_data[private_id_start:private_id_start+1]
@@ -71,8 +73,7 @@ def process_match(match_offset: int, memory_data: mmap.mmap, _: str | None) -> l
 
         print(f"[+] {entry_type} Identified at offset {match_offset}")
 
-        # Write Extracted Data to CSV
-        return [str(match_offset), entry_type, private_browsing_id, first_party_domain, requested_resource]
+        return BrowserRequest(match_offset, entry_type, private_browsing_id, first_party_domain, requested_resource)
 
 if __name__ == '__main__':
     run_argparser(

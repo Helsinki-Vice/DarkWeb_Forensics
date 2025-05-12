@@ -4,7 +4,9 @@ import re
 import mmap
 import time
 import csv
-from typing import Any, Callable
+from typing import Callable
+
+from records import *
 
 SPIDER_LOGO = r"""
    _____                 _             ______                       _          
@@ -26,7 +28,7 @@ Website: www.spyderforensics.com
 Course: Host-Based Dark Web Forensics
 """
 
-def extract_to_csv(dump_file_path: str, output_csv_path: str, csv_headers: list[str], regex_pattern: re.Pattern[bytes], process_matcher: Callable[[int, mmap.mmap, str | None], list[str] | None], output_folder: str | None) -> None:
+def extract_to_csv(dump_file_path: str, output_csv_path: str, csv_headers: list[str], regex_pattern: re.Pattern[bytes], process_matcher: Callable[[int, mmap.mmap, str | None], BrowserRequest | BrowserActivity | SocksRequest | TabData | None], output_folder: str | None) -> None:
     """Reads the entire file using mmap"""
     start_time = time.time()
     print(f"Processing started at: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}\n")
@@ -53,7 +55,7 @@ def extract_to_csv(dump_file_path: str, output_csv_path: str, csv_headers: list[
                 for offset in match_offsets:
                     row = process_matcher(offset, memory_data, output_folder)
                     if row:
-                        csv_writer.writerow(row)
+                        csv_writer.writerow(row.to_csv_row())
 
     end_time = time.time()
     print(f"\nProcessing completed at: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(end_time))}")
@@ -64,7 +66,7 @@ def extract_to_csv(dump_file_path: str, output_csv_path: str, csv_headers: list[
     print(f"\nResults saved to: {output_csv_path}")
 
 
-def run_argparser(description: str, input_help: str, output_help: str, program_name: str, csv_headers: list[str], regex_pattern: re.Pattern[bytes], process_matcher: Callable[[int, mmap.mmap, str | None], list[str] | None], output_folder: str):
+def run_argparser(description: str, input_help: str, output_help: str, program_name: str, csv_headers: list[str], regex_pattern: re.Pattern[bytes], process_matcher: Callable[[int, mmap.mmap, str | None], BrowserActivity | TabData | SocksRequest | BrowserRequest | None], output_folder: str):
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('-i', '--input', type=str, required=True, help=input_help)
     parser.add_argument('-o', '--output', type=str, required=True, help=output_help)

@@ -2,6 +2,7 @@ import mmap
 import re
 
 from shared import run_argparser
+from records import HttpRequest
 
 # Pre-compile the pattern for efficiency
 patterns = [
@@ -9,14 +10,15 @@ patterns = [
 ]
 pattern_re = re.compile(b'|'.join(re.escape(p) for p in patterns))
 
-def process_match(match_offset: int, memory_data: mmap.mmap, _: str | None) -> list[str] | None:
+def process_match(match_offset: int, memory_data: mmap.mmap, _: str | None) -> HttpRequest | None:
     """Manually walks the memory data to extract HTTP request metadata"""
+    match_prefix_len = 26
     try:
-        matched_prefix = memory_data[match_offset:match_offset + 26]
+        matched_prefix = memory_data[match_offset:match_offset + match_prefix_len]
     except IndexError:
         return  
 
-    index = match_offset + 26 
+    index = match_offset + match_prefix_len 
 
 
     request_id = "Unknown"
@@ -107,7 +109,7 @@ def process_match(match_offset: int, memory_data: mmap.mmap, _: str | None) -> l
     print(f"[+] Extracted URL Information from HTTP Request at offset {match_offset}")
 
     # Write extracted data to CSV
-    return [str(match_offset), "HTTP Request", method, request_id, url, origin_url, document_url, request_type]
+    return HttpRequest(match_offset, "HTTP Request", method, request_id, url, origin_url, document_url, request_type)
 
 if __name__ == '__main__':
     run_argparser(

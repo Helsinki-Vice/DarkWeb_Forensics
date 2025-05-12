@@ -3,6 +3,7 @@ import re
 
 from shared import run_argparser
 from base64icon import extract_base64_icon
+from records import TabData
 
 # Pre-compile the pattern for efficiency
 patterns = [
@@ -10,14 +11,15 @@ patterns = [
 ]
 pattern_re = re.compile(b'|'.join(re.escape(p) for p in patterns))
 
-def process_match(match_offset: int, memory_data: mmap.mmap, extracted_icons_folder: str | None) -> list[str] | None:
+def process_match(match_offset: int, memory_data: mmap.mmap, extracted_icons_folder: str | None) -> TabData | None:
     """Manually walks the memory data to extract Browser Tab Session Data."""
+    match_prefix_len = 26
     try:
-        matched_prefix = memory_data[match_offset:match_offset + 26]
+        matched_prefix = memory_data[match_offset:match_offset + match_prefix_len]
     except IndexError:
         return  
 
-    index = match_offset + 26  # Move past matched pattern
+    index = match_offset + match_prefix_len  # Move past matched pattern
 
     # Locate 'url'
     url_marker = memory_data.find(b'url', index, index + 15)
@@ -107,7 +109,7 @@ def process_match(match_offset: int, memory_data: mmap.mmap, extracted_icons_fol
     print(f"[+] Extracted Browser Tab Session Data at offset {match_offset}")
 
     # Write extracted data to CSV
-    return [str(match_offset), "Browser Tab Session Data", url, title, favicon_url]
+    return TabData(match_offset, "Browser Tab Session Data", url, title, favicon_url)
 
 if __name__ == '__main__':
     run_argparser(

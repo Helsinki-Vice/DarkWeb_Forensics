@@ -2,6 +2,7 @@ import mmap
 import re
 
 from shared import run_argparser
+from records import BrowserActivity
 
 # Pre-compile patterns for efficiency
 patterns = [
@@ -18,14 +19,15 @@ patterns = [
 ]
 pattern_re = re.compile(b'|'.join(re.escape(p) for p in patterns))  # Join patterns into one regex
 
-def process_match(match_offset: int, memory_data: mmap.mmap, output_folder: str | None) -> list[str] | None:
+def process_match(match_offset: int, memory_data: mmap.mmap, output_folder: str | None) -> BrowserActivity | None:
     """Processes pattern match within memory dump and writes relevant data to CSV."""
+    match_prefix_len = 8
     try:
-        matched_prefix = memory_data[match_offset:match_offset + 8]
+        matched_prefix = memory_data[match_offset:match_offset + match_prefix_len]
     except IndexError:
         return  
 
-    index = match_offset + 8 
+    index = match_offset + match_prefix_len
 
     if matched_prefix:
         extracted_data = ""  
@@ -39,7 +41,7 @@ def process_match(match_offset: int, memory_data: mmap.mmap, output_folder: str 
             termination_pattern = re.compile(rb'\x00\x0E|\x00\xE5|\x00\x00')
             match = termination_pattern.search(memory_data[http_data_start:])
             if not match:
-                return  
+                return None
             http_data_end = http_data_start + match.start()
 
             try:
@@ -64,8 +66,7 @@ def process_match(match_offset: int, memory_data: mmap.mmap, output_folder: str 
             index = http_data_end + 2  
             print(f"[+] Potential Browser Activity identified at offset: {index}")
 
-            # Write Extracted Data to CSV**
-            return [str(match_offset), entry_type, extracted_data]
+            return BrowserActivity(match_offset, entry_type, extracted_data)
 
 if __name__ == '__main__':
     run_argparser(

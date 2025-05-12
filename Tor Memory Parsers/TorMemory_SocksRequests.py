@@ -2,6 +2,7 @@ import mmap
 import re
 
 from shared import run_argparser
+from records import SocksRequest
 
 # Pre-compile patterns for efficiency
 patterns = [
@@ -12,14 +13,15 @@ patterns = [
 ]
 pattern_re = re.compile(b'|'.join(re.escape(p) for p in patterns))  # Join patterns into one regex
 
-def process_match(match_offset: int, memory_data: mmap.mmap, _: str | None) -> list[str] | None:
+def process_match(match_offset: int, memory_data: mmap.mmap, _: str | None) -> SocksRequest | None:
     """Processes pattern match within memory dump"""
+    match_prefix_len = 9
     try:
-        matched_prefix = memory_data[match_offset:match_offset + 9]
+        matched_prefix = memory_data[match_offset:match_offset + match_prefix_len]
     except IndexError:
         return  
 
-    index = match_offset + 9 
+    index = match_offset + match_prefix_len
 
     if matched_prefix:
         tls_metadata = ""
@@ -29,9 +31,9 @@ def process_match(match_offset: int, memory_data: mmap.mmap, _: str | None) -> l
         private_browsing_id = ""
         first_party_domain = ""
 
-        def stop_extraction() -> list[str]:
+        def stop_extraction() -> SocksRequest:
             print (f"[+] Partially Carved SOCKS5 Traffic Identified at offset {match_offset}")
-            return [str(match_offset), "Partially Carved SOCKS5 Browser Request", tls_metadata, url, socks_info, second_url, private_browsing_id, first_party_domain]
+            return SocksRequest(match_offset, "Partially Carved SOCKS5 Browser Request", tls_metadata, url, socks_info, second_url, private_browsing_id, first_party_domain)
 
         # Extract TLS metadata (Required)
         tls_metadata_start = memory_data.find(b'[tlsflags', index)
@@ -58,7 +60,6 @@ def process_match(match_offset: int, memory_data: mmap.mmap, _: str | None) -> l
         if socks_info_end != -1:
             if socks_info_end - index > 20:
                 return stop_extraction()
-                return
             socks_info = memory_data[index:socks_info_end].decode(errors='ignore').strip()
             index = socks_info_end + 1  # Move past closing bracket
 
@@ -103,7 +104,7 @@ def process_match(match_offset: int, memory_data: mmap.mmap, _: str | None) -> l
         print(f"[+] SOCKS5 Traffic Identified at offset {match_offset}")
 
         # **Write Extracted Data to CSV**
-        return [str(match_offset), "SOCKS5 Browser Request", tls_metadata, url, socks_info, second_url, private_browsing_id, first_party_domain]
+        return SocksRequest(match_offset, "SOCKS5 Browser Request", tls_metadata, url, socks_info, second_url, private_browsing_id, first_party_domain)
     
 if __name__ == '__main__':
     run_argparser(
