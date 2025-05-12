@@ -12,7 +12,7 @@ patterns = [
 ]
 pattern_re = re.compile(b'|'.join(re.escape(p) for p in patterns))  # Join patterns into one regex
 
-def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, _: str | None):
+def process_match(match_offset: int, memory_data: mmap.mmap, _: str | None) -> list[str] | None:
     """Processes pattern match within memory dump"""
     try:
         matched_prefix = memory_data[match_offset:match_offset + 9]
@@ -29,9 +29,9 @@ def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, _: str 
         private_browsing_id = ""
         first_party_domain = ""
 
-        def stop_extraction() -> tuple[int, str, str, str, str, str, str, str]:
+        def stop_extraction() -> list[str]:
             print (f"[+] Partially Carved SOCKS5 Traffic Identified at offset {match_offset}")
-            return match_offset, "Partially Carved SOCKS5 Browser Request", tls_metadata, url, socks_info, second_url, private_browsing_id, first_party_domain
+            return [str(match_offset), "Partially Carved SOCKS5 Browser Request", tls_metadata, url, socks_info, second_url, private_browsing_id, first_party_domain]
 
         # Extract TLS metadata (Required)
         tls_metadata_start = memory_data.find(b'[tlsflags', index)
@@ -57,7 +57,7 @@ def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, _: str 
         socks_info_end = memory_data.find(b')', index)
         if socks_info_end != -1:
             if socks_info_end - index > 20:
-                csv_writer.writerow(stop_extraction())
+                return stop_extraction()
                 return
             socks_info = memory_data[index:socks_info_end].decode(errors='ignore').strip()
             index = socks_info_end + 1  # Move past closing bracket
@@ -72,8 +72,7 @@ def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, _: str 
                 second_url = memory_data[second_url_start:second_url_end].decode(errors='ignore').strip()
                 index = second_url_end + 3  
             else:
-                csv_writer.writerow(stop_extraction())
-                return  
+                return stop_extraction()
 
         # Extract Private Browsing ID 
         private_start = memory_data.find(b'privateBrowsingId=', index)
@@ -88,8 +87,7 @@ def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, _: str 
                 private_browsing_id = f"[Non-printable: {private_browsing_id_byte.hex()}]"
             index = private_id_start + 1
         else:
-            csv_writer.writerow(stop_extraction())
-            return  
+            return stop_extraction()
 
         # Extract First Party Domain 
         first_party_start = memory_data.find(b'firstPartyDomain=', index)
@@ -100,16 +98,12 @@ def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, _: str 
                 first_party_domain = memory_data[first_party_start:first_party_end].decode(errors='ignore').strip()
                 index = first_party_end + 1  
             else:
-                csv_writer.writerow(stop_extraction())
-                return  
+                return stop_extraction()
 
         print(f"[+] SOCKS5 Traffic Identified at offset {match_offset}")
 
         # **Write Extracted Data to CSV**
-        csv_writer.writerow([
-            match_offset, "SOCKS5 Browser Request", tls_metadata, url, 
-            socks_info, second_url, private_browsing_id, first_party_domain
-        ])
+        return [str(match_offset), "SOCKS5 Browser Request", tls_metadata, url, socks_info, second_url, private_browsing_id, first_party_domain]
     
 if __name__ == '__main__':
     run_argparser(

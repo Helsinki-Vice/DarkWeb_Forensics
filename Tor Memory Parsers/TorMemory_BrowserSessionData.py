@@ -1,10 +1,8 @@
-import os
 import mmap
 import re
-import base64
-import binascii
 
 from shared import run_argparser
+from base64icon import extract_base64_icon
 
 # Pre-compile the pattern for efficiency
 patterns = [
@@ -12,59 +10,7 @@ patterns = [
 ]
 pattern_re = re.compile(b'|'.join(re.escape(p) for p in patterns))
 
-
-def is_valid_base64(s: str) -> bool:
-    """Check if a string is a valid Base64 encoded string."""
-    try:
-        base64.b64decode(s, validate=True)
-        return True
-    except (binascii.Error, ValueError):
-        return False
-
-
-def extract_base64_icon(favicon_url: str, index: int, extracted_icons_folder: str) ->  tuple[str, str] | None:
-    """Extract base64-encoded favicons and save them to a folder."""
-    
-    if not favicon_url.startswith('data:image'):
-        return None  # Not a Base64 image
-
-    try:
-        # Extract Base64 data part
-        base64_data = favicon_url.split(',', 1)[1].strip()
-
-        # Ensure only valid Base64 characters remain
-        base64_data = re.sub(r'[^A-Za-z0-9+/=]', '', base64_data)
-
-        # Validate Base64 data before decoding
-        if not is_valid_base64(base64_data):
-            print(f"[-] Invalid Base64 favicon at offset {index}, skipping extraction.")
-            return None
-
-        # Decode Base64 data
-        image_data = base64.b64decode(base64_data)
-
-        # Determine file extension
-        file_extension = 'ico' if 'image/x-icon' in favicon_url else 'png'
-
-        # Ensure output folder exists
-        os.makedirs(extracted_icons_folder, exist_ok=True)
-
-        # Name the file as the starting offset for the favicon data
-        output_filename = f"{index}_favicon.{file_extension}"
-        icon_output = os.path.join(extracted_icons_folder, output_filename)
-
-        # Save image data to file
-        with open(icon_output, 'wb') as image_file:
-            image_file.write(image_data)
-
-        print(f"[+] Favicon Extracted: {icon_output}")
-        return output_filename, icon_output
-
-    except (binascii.Error, OSError, IndexError, ValueError) as e:
-        print(f"[-] Error decoding Base64 Favicon at offset {index}: {e}")
-        return None
-
-def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, extracted_icons_folder: str | None) -> None:
+def process_match(match_offset: int, memory_data: mmap.mmap, extracted_icons_folder: str | None) -> list[str] | None:
     """Manually walks the memory data to extract Browser Tab Session Data."""
     try:
         matched_prefix = memory_data[match_offset:match_offset + 26]
@@ -161,9 +107,7 @@ def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, extract
     print(f"[+] Extracted Browser Tab Session Data at offset {match_offset}")
 
     # Write extracted data to CSV
-    csv_writer.writerow([
-        match_offset, "Browser Tab Session Data", url, title, favicon_url
-    ])
+    return [str(match_offset), "Browser Tab Session Data", url, title, favicon_url]
 
 if __name__ == '__main__':
     run_argparser(

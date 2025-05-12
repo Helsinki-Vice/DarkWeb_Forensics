@@ -9,7 +9,7 @@ patterns = [
 ]
 pattern_re = re.compile(b'|'.join(re.escape(p) for p in patterns))
 
-def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, _: str | None):
+def process_match(match_offset: int, memory_data: mmap.mmap, _: str | None) -> list[str] | None:
     """Manually walks the memory data to extract HTTP request metadata"""
     try:
         matched_prefix = memory_data[match_offset:match_offset + 26]
@@ -107,9 +107,7 @@ def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, _: str 
     print(f"[+] Extracted URL Information from HTTP Request at offset {match_offset}")
 
     # Write extracted data to CSV
-    csv_writer.writerow([
-        match_offset, "HTTP Request", method, request_id, url, origin_url, document_url, request_type, 
-    ])
+    return [str(match_offset), "HTTP Request", method, request_id, url, origin_url, document_url, request_type]
 
 if __name__ == '__main__':
     run_argparser(

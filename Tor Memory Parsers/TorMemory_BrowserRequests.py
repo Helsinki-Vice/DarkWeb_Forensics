@@ -11,7 +11,7 @@ patterns = [
 ]
 pattern_re = re.compile(b'|'.join(re.escape(p) for p in patterns))  # Join patterns into one regex
 
-def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, _: str | None) -> None:
+def process_match(match_offset: int, memory_data: mmap.mmap, _: str | None) -> list[str] | None:
     """Processes pattern match within memory dump and writes to CSV only if required fields exist."""
     try:
         matched_prefix = memory_data[match_offset:match_offset + 9]
@@ -72,10 +72,7 @@ def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, _: str 
         print(f"[+] {entry_type} Identified at offset {match_offset}")
 
         # Write Extracted Data to CSV
-        csv_writer.writerow([
-            match_offset, entry_type, private_browsing_id, 
-            first_party_domain, requested_resource
-        ])
+        return [str(match_offset), entry_type, private_browsing_id, first_party_domain, requested_resource]
 
 if __name__ == '__main__':
     run_argparser(

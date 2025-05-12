@@ -18,7 +18,7 @@ patterns = [
 ]
 pattern_re = re.compile(b'|'.join(re.escape(p) for p in patterns))  # Join patterns into one regex
 
-def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, output_folder: str | None) -> None:
+def process_match(match_offset: int, memory_data: mmap.mmap, output_folder: str | None) -> list[str] | None:
     """Processes pattern match within memory dump and writes relevant data to CSV."""
     try:
         matched_prefix = memory_data[match_offset:match_offset + 8]
@@ -59,13 +59,13 @@ def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, output_
 
             # Skip writing if no printable data is found**
             if not extracted_data.strip():
-                return  
+                return None
 
             index = http_data_end + 2  
             print(f"[+] Potential Browser Activity identified at offset: {index}")
 
             # Write Extracted Data to CSV**
-            csv_writer.writerow([match_offset, entry_type, extracted_data])
+            return [str(match_offset), entry_type, extracted_data]
 
 if __name__ == '__main__':
     run_argparser(
