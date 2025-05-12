@@ -5,7 +5,7 @@ import re
 import time
 import csv
 
-from shared import banner
+from shared import run_argparser
 
 # Pre-compile patterns for efficiency
 patterns = [
@@ -142,14 +142,10 @@ def extract_socks5_traffic(dump_file_path, output_csv_path):
     print(f"Total execution time: {int(hours):02d}:{int(minutes):02d}:{seconds:.2f}")
     
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Extract Tor SOCKS5 Requests from a Memory Dump')
-    parser.add_argument('-i', '--input', type=str, required=True, help='Path to the memory dump file.')
-    parser.add_argument('-o', '--output', type=str, required=True, help='Path to the output CSV file.')
-
-    args = parser.parse_args()
-    print(banner("SOCKS5 Requests"))
-
-    if not os.path.isfile(args.input):
-        print("The specified memory dump file does not exist.")
-    else:
-        extract_socks5_traffic(args.input, args.output)
+    run_argparser(
+        description = "Extract Tor SOCKS5 Requests from a Memory Dump",
+        input_help = "Path to the memory dump file.",
+        output_help = "Path to the output CSV file.",
+        program_name = "SOCKS5 Requests",
+        program = extract_socks5_traffic
+    )

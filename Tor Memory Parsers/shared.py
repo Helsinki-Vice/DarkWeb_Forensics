@@ -1,3 +1,12 @@
+import os
+import argparse
+import mmap
+import re
+import time
+import csv
+import base64
+from typing import Callable
+
 SPIDER_LOGO = r"""
    _____                 _             ______                       _          
   / ____|               | |           |  ____|                     (_)         
@@ -17,3 +26,16 @@ Author: Spyder Forensics Training
 Website: www.spyderforensics.com
 Course: Host-Based Dark Web Forensics
 """
+
+def run_argparser(description: str, input_help: str, output_help: str, program_name: str, program: Callable[[str, str], None]):
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('-i', '--input', type=str, required=True, help=input_help)
+    parser.add_argument('-o', '--output', type=str, required=True, help=output_help)
+
+    args = parser.parse_args()
+    print(banner(program_name))
+
+    if not os.path.isfile(args.input):
+        print("The specified memory dump file does not exist.")
+    else:
+        program(args.input, args.output)

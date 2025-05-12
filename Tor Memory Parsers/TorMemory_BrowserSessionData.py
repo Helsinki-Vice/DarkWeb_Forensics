@@ -5,8 +5,9 @@ import re
 import time
 import csv
 import base64
+import binascii
 
-from shared import banner
+from shared import run_argparser
 
 # Pre-compile the pattern for efficiency
 patterns = [
@@ -20,7 +21,7 @@ def is_valid_base64(s):
     try:
         base64.b64decode(s, validate=True)
         return True
-    except (base64.binascii.Error, ValueError):
+    except (binascii.Error, ValueError):
         return False
 
 
@@ -62,7 +63,7 @@ def extract_base64_icon(favicon_url, index, extracted_icons_folder):
         print(f"[+] Favicon Extracted: {icon_output}")
         return output_filename, icon_output
 
-    except (base64.binascii.Error, OSError, IndexError, ValueError) as e:
+    except (binascii.Error, OSError, IndexError, ValueError) as e:
         print(f"[-] Error decoding Base64 Favicon at offset {index}: {e}")
         return None
 
@@ -202,11 +203,10 @@ def extract_tabdata(dump_file_path, output_folder):
     print(f"\nResults saved to: {output_csv_path}")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Extract Browser Tab Session Data from a Memory Dump')
-    parser.add_argument('-i', '--input', type=str, required=True, help='Path to the memory dump file.')
-    parser.add_argument('-o', '--output', type=str, required=True, help='Path to the output folder.')
-
-    args = parser.parse_args()
-    print(banner("Browser Tab Session Data"))
-    
-    extract_tabdata(args.input, args.output)
+    run_argparser(
+        description = "Extract Browser Tab Session Data from a Memory Dump",
+        input_help = "Path to the memory dump file.",
+        output_help = "Path to the output folder.",
+        program_name = "Browser Tab Session Data",
+        program = extract_tabdata
+    )

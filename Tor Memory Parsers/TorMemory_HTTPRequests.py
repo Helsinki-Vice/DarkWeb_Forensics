@@ -4,10 +4,8 @@ import mmap
 import re
 import time
 import csv
-import struct
-import datetime
 
-from shared import banner
+from shared import run_argparser
 
 # Pre-compile the pattern for efficiency
 patterns = [
@@ -141,15 +139,10 @@ def extract_http_requests(dump_file_path, output_csv_path):
     print(f"Total execution time: {int(hours):02d}:{int(minutes):02d}:{seconds:.2f}")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Extract URL information from HTTP Requests from a Memory Dump')
-    parser.add_argument('-i', '--input', type=str, required=True, help='Path to the memory dump file.')
-    parser.add_argument('-o', '--output', type=str, required=True, help='Path to the output CSV file.')
-
-    args = parser.parse_args()
-    print(banner("HTTP Requests"))
-
-    if not os.path.isfile(args.input):
-        print("The specified memory dump file does not exist.")
-    else:
-        extract_http_requests(args.input, args.output)
-    
+    run_argparser(
+        description = "Extract URL information from HTTP Requests from a Memory Dump",
+        input_help = "Path to the memory dump file.",
+        output_help = "Path to the output CSV file.",
+        program_name = "HTTP Requests",
+        program = extract_http_requests
+    )
