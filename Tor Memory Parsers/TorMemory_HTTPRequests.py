@@ -1,7 +1,5 @@
 import mmap
 import re
-import time
-import csv
 
 from shared import run_argparser
 
@@ -11,7 +9,7 @@ patterns = [
 ]
 pattern_re = re.compile(b'|'.join(re.escape(p) for p in patterns))
 
-def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer):
+def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, _: str | None):
     """Manually walks the memory data to extract HTTP request metadata"""
     try:
         matched_prefix = memory_data[match_offset:match_offset + 26]
@@ -113,34 +111,14 @@ def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer):
         match_offset, "HTTP Request", method, request_id, url, origin_url, document_url, request_type, 
     ])
 
-def extract_http_requests(dump_file_path: str, output_csv_path: str):
-    """Reads the memory dump and extracts HTTP request metadata."""
-    start_time = time.time()
-    print(f"Processing started at: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}\n")
-
-    with open(output_csv_path, 'w', newline='', encoding='utf-8') as csv_file:
-        csv_writer = csv.writer(csv_file)
-        csv_writer.writerow(["Offset", "Type", "Method", "Request ID", "URL", "Origin URL", "Document URL", "Resource Type"])
-
-        with open(dump_file_path, 'rb') as dump_file:
-            with mmap.mmap(dump_file.fileno(), 0, access=mmap.ACCESS_READ) as memory_data:
-                match_offsets = sorted(match.start() for match in pattern_re.finditer(memory_data))
-
-                for offset in match_offsets:
-                    process_match(offset, memory_data, csv_writer)
-
-    end_time = time.time()
-    print(f"\nProcessing completed at: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(end_time))}")
-    elapsed_time = end_time - start_time
-    hours, remainder = divmod(elapsed_time, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    print(f"Total execution time: {int(hours):02d}:{int(minutes):02d}:{seconds:.2f}")
-
 if __name__ == '__main__':
     run_argparser(
         description = "Extract URL information from HTTP Requests from a Memory Dump",
         input_help = "Path to the memory dump file.",
         output_help = "Path to the output CSV file.",
         program_name = "HTTP Requests",
-        program = extract_http_requests
+        csv_headers = ["Offset", "Type", "Method", "Request ID", "URL", "Origin URL", "Document URL", "Resource Type"],
+        regex_pattern = pattern_re,
+        process_matcher = process_match,
+        output_folder = ""
     )

@@ -1,8 +1,6 @@
 import os
 import mmap
 import re
-import time
-import csv
 import base64
 import binascii
 
@@ -66,7 +64,7 @@ def extract_base64_icon(favicon_url: str, index: int, extracted_icons_folder: st
         print(f"[-] Error decoding Base64 Favicon at offset {index}: {e}")
         return None
 
-def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, extracted_icons_folder: str) -> None:
+def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, extracted_icons_folder: str | None) -> None:
     """Manually walks the memory data to extract Browser Tab Session Data."""
     try:
         matched_prefix = memory_data[match_offset:match_offset + 26]
@@ -157,7 +155,8 @@ def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, extract
                 index = favicon_end  # Move index past extracted data
 
                 # Check if the extracted URL is Base64 and extract the icon
-                extract_base64_icon(favicon_url, match_offset, extracted_icons_folder)
+                if extracted_icons_folder:
+                    extract_base64_icon(favicon_url, match_offset, extracted_icons_folder)
                 
     print(f"[+] Extracted Browser Tab Session Data at offset {match_offset}")
 
@@ -166,46 +165,14 @@ def process_match(match_offset: int, memory_data: mmap.mmap, csv_writer, extract
         match_offset, "Browser Tab Session Data", url, title, favicon_url
     ])
 
-
-def extract_tabdata(dump_file_path: str, output_folder: str) -> None:
-    """Reads the memory dump and extracts Browser Tab Session Data."""
-    start_time = time.time()
-    print(f"Processing started at: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}\n")
-    
-    # Create the main output folder based on user input
-    os.makedirs(output_folder, exist_ok=True)
-
-    # Define CSV file path inside the output folder
-    output_csv_path = os.path.join(output_folder, f"{os.path.basename(output_folder)}.csv")
-
-    # Create Favicon output folder inside the main output folder
-    extracted_icons_folder = os.path.join(output_folder, "Extracted FavIcons")
-    os.makedirs(extracted_icons_folder, exist_ok=True)
-
-    with open(output_csv_path, 'w', newline='', encoding='utf-8') as csv_file:
-        csv_writer = csv.writer(csv_file)
-        csv_writer.writerow(["Offset", "Type", "URL", "Title", "FavIcon URL"])
-
-        with open(dump_file_path, 'rb') as dump_file:
-            with mmap.mmap(dump_file.fileno(), 0, access=mmap.ACCESS_READ) as memory_data:
-                match_offsets = sorted(match.start() for match in pattern_re.finditer(memory_data))
-
-                for offset in match_offsets:
-                    process_match(offset, memory_data, csv_writer, extracted_icons_folder)
-    end_time = time.time()
-    print(f"\nProcessing completed at: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(end_time))}")
-    elapsed_time = end_time - start_time
-    hours, remainder = divmod(elapsed_time, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    print(f"Total execution time: {int(hours):02d}:{int(minutes):02d}:{seconds:.2f}")
-
-    print(f"\nResults saved to: {output_csv_path}")
-
 if __name__ == '__main__':
     run_argparser(
         description = "Extract Browser Tab Session Data from a Memory Dump",
         input_help = "Path to the memory dump file.",
         output_help = "Path to the output folder.",
         program_name = "Browser Tab Session Data",
-        program = extract_tabdata
+        csv_headers = ["Offset", "Type", "URL", "Title", "FavIcon URL"],
+        regex_pattern = pattern_re,
+        process_matcher = process_match,
+        output_folder = ""
     )
